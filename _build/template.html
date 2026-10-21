@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>提示詞填空小工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=__ICON_NAMES__&display=block">
+<style>
+/*__STYLE__*/
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="toprow">
+      <h1><span class="mi">palette</span><span data-ui="h1"></span></h1>
+      <div class="seg" role="group" aria-label="Interface language / 介面語言">
+        <button type="button" id="uiZh" aria-pressed="true">中文</button>
+        <button type="button" id="uiEn" aria-pressed="false">EN</button>
+      </div>
+    </div>
+    <p data-ui="intro"></p>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="person" aria-selected="true" data-ui="tabPerson"></button>
+      <button class="tab" role="tab" data-tab="scene" aria-selected="false" data-ui="tabScene"></button>
+      <button class="tab" role="tab" data-tab="both" aria-selected="false" data-ui="tabBoth"></button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main id="cards"></main>
+
+    <aside class="panel">
+      <section class="box">
+        <h2 data-ui="outTitle"></h2>
+        <div class="row" style="margin-top:0;align-items:center;padding-left:0">
+          <div class="seg" role="group">
+            <button type="button" id="langZh" aria-pressed="true" data-ui="langZh"></button>
+            <button type="button" id="langEn" aria-pressed="false" data-ui="langEn"></button>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="prefix" checked><span data-ui="prefixLabel"></span></label>
+        <textarea id="out" readonly></textarea>
+        <div id="miss" class="miss" hidden></div>
+        <div id="transNote" class="miss" hidden data-ui="transNote"></div>
+        <div class="row stack">
+          <button type="button" class="btn primary" id="copy"><span class="mi">content_copy</span><span data-ui="btnCopy"></span></button>
+          <button type="button" class="btn ghost" id="random"><span class="mi">casino</span><span data-ui="btnRandom"></span></button>
+          <a class="btn teal" id="openGemini" href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer"><span class="mi">open_in_new</span><span data-ui="btnGemini"></span></a>
+          <a class="btn teal" id="openGpt" href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer"><span class="mi">open_in_new</span><span data-ui="btnGpt"></span></a>
+        </div>
+        <p class="note" data-ui="tip"></p>
+        <div id="copyStatus" class="status" role="status" aria-live="polite"></div>
+      </section>
+    </aside>
+  </div>
+  <footer data-ui="footer"></footer>
+</div>
+
+<div class="mobilebar">
+  <button type="button" class="btn primary" id="copyM"><span class="mi">content_copy</span><span data-ui="btnCopy"></span></button>
+  <button type="button" class="btn ghost" id="randomM"><span class="mi">casino</span><span data-ui="btnRandom"></span></button>
+</div>
+
+<button type="button" class="btn primary fab" id="fbFab" hidden><span class="mi">chat</span><span data-ui="btnReopen"></span></button>
+
+<dialog id="fbDialog" aria-labelledby="fbTitle">
+  <form id="fbForm" novalidate>
+    <h2 id="fbTitle" data-ui="modalTitle"></h2>
+    <p class="note" data-ui="modalIntro"></p>
+    <p class="note" data-ui="fbNote"></p>
+
+    <p class="fbpart" data-ui="fbPart1"></p>
+    <div class="q"><p data-ui="qWait"></p><div class="pick" id="qChange" role="group"></div></div>
+    <div class="q"><p data-ui="q1"></p><div class="scale" id="qHelpful" role="group"></div></div>
+
+    <p class="fbpart" data-ui="fbPart2"></p>
+    <div class="q"><p data-ui="q2"></p><div class="pick" id="qWorked" role="group"></div></div>
+    <div class="q"><p data-ui="q3"></p><div class="pick" id="qAi" role="group"></div></div>
+    <label class="field"><span data-ui="q4"></span><textarea id="qComment" rows="3" maxlength="600" data-ui-ph="q4Ph"></textarea></label>
+    <label class="check"><input type="checkbox" id="qSendPrompt"><span data-ui="consent"></span></label>
+
+    <div class="fbtn">
+      <button type="submit" class="btn primary" id="fbSubmit"><span class="mi">send</span><span data-ui="submit"></span></button>
+      <button type="button" class="btn ghost" id="fbLater"><span class="mi">close</span><span data-ui="btnLater"></span></button>
+    </div>
+    <div id="fbStatus" class="status" role="status" aria-live="polite"></div>
+  </form>
+</dialog>
+
+<script>
+'use strict';
+/* ===== 老師設定區（回收學生的小問卷）=====
+   不用 Google 表單。把下面三項依你選的服務填好（步驟請看 README.md）：
+   - Web3Forms：ENDPOINT 'https://api.web3forms.com/submit'，EXTRA 填 { access_key: '你的金鑰', subject: '提示詞工具回饋' }
+   - Formspree：ENDPOINT 'https://formspree.io/f/你的代號'
+   - Supabase：ENDPOINT 'https://專案.supabase.co/rest/v1/feedback'，HEADERS 填 apikey 與 Authorization
+   沒填 ENDPOINT 的話，學生按「送出」只會看到提示，不會真的傳送。 */
+const CONFIG = {
+  ENDPOINT: 'https://api.web3forms.com/submit',
+  HEADERS: {},
+  EXTRA: { access_key: '6b141ce7-a34b-4608-98ea-0edbdde5c45f', subject: '提示詞工具回饋' }
+};
+
+const DATA = __DATA__;
+const ZH = DATA.ui.zh;   /* 提示詞本身的固定文字、問卷送出的值，一律用中文那一份 */
+const STORE = 'prompt-tool-person-v1';
+
+const GROUPS = {};
+DATA.cards.forEach(c => c.groups.forEach(g => { GROUPS[g.key] = g; }));
+
+/* 三個分頁各自顯示哪幾張卡片；選的內容三個分頁共用 */
+const TAB_CARDS = {
+  person: ['style', 'subject'],
+  scene: ['style', 'scene', 'camera', 'light', 'avoid'],
+  both: ['style', 'subject', 'scene', 'camera', 'light', 'avoid']
+};
+function visibleCards() { return TAB_CARDS[state.tab].map(k => DATA.cards.find(c => c.key === k)).filter(Boolean); }
+function groupVisible(g) { return !g.tabs || g.tabs.indexOf(state.tab) >= 0; }
+function optVisible(o) { return !o.tabs || o.tabs.indexOf(state.tab) >= 0; }
+function visibleGroupKeys() {
+  const keys = [];
+  visibleCards().forEach(c => c.groups.forEach(g => { if (groupVisible(g)) keys.push(g.key); }));
+  return keys;
+}
+
+/* Material Symbols 載入成功才顯示圖示 */
+if (document.fonts && document.fonts.load) {
+  document.fonts.load('24px "Material Symbols Outlined"', 'palette').then(function (f) {
+    if (f && f.length) document.documentElement.classList.add('mi-ready');
+  }).catch(function () {});
+}
+
+/* ---------- 狀態 ---------- */
+function defaultUi() {
+  const l = (navigator.language || 'zh').toLowerCase();
+  return l.indexOf('zh') === 0 ? 'zh' : 'en';
+}
+function defaults() {
+  const sel = {};
+  Object.keys(GROUPS).forEach(k => { sel[k] = (DATA.defaults[k] || []).slice(); });
+  const ui = defaultUi();
+  return { sel: sel, text: {}, gtext: {}, lang: ui === 'en' ? 'en' : 'zh', ui: ui, prefix: true, tab: 'person' };
+}
+function loadState() {
+  const d = defaults();
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE) || 'null');
+    if (s && s.sel) {
+      Object.keys(d.sel).forEach(k => { if (Array.isArray(s.sel[k])) d.sel[k] = s.sel[k].filter(id => GROUPS[k].opts.some(o => o.id === id)); });
+      d.text = s.text || {};
+      d.gtext = s.gtext || {};
+      d.lang = s.lang === 'en' ? 'en' : 'zh';
+      d.ui = s.ui === 'zh' || s.ui === 'en' ? s.ui : d.ui;
+      d.prefix = s.prefix !== false;
+      d.tab = TAB_CARDS[s.tab] ? s.tab : 'person';
+    }
+  } catch (e) { /* 瀏覽器不給存也沒關係 */ }
+  return d;
+}
+let state = loadState();
+let UI = DATA.ui[state.ui];
+function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+function isEn() { return state.ui === 'en'; }
+function L(zh, en) { return isEn() && en ? en : zh; }
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+function picked(key) {
+  return state.sel[key].map(id => GROUPS[key].opts.find(o => o.id === id)).filter(Boolean).filter(optVisible);
+}
+
+function applyUi() {
+  UI = DATA.ui[state.ui];
+  document.documentElement.lang = isEn() ? 'en' : 'zh-Hant';
+  document.title = UI.pageTitle;
+  document.querySelectorAll('[data-ui]').forEach(n => { n.textContent = UI[n.dataset.ui]; });
+  document.querySelectorAll('[data-ui-ph]').forEach(n => { n.placeholder = UI[n.dataset.uiPh]; });
+  document.getElementById('out').placeholder = UI.outPlaceholder;
+  document.getElementById('uiZh').setAttribute('aria-pressed', isEn() ? 'false' : 'true');
+  document.getElementById('uiEn').setAttribute('aria-pressed', isEn() ? 'true' : 'false');
+}
+
+/* ---------- 畫面 ---------- */
+function inkFor(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return '#fff';
+  const n = parseInt(m[1], 16);
+  const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  return lum > 0.62 ? '#3F2D25' : '#FFFFFF';
+}
+function makeOption(g, opt) {
+  const label = isEn() ? (opt.labelEn || opt.en) : opt.zh;
+  const b = el('button', g.view === 'tile' ? 'tile' : 'chip');
+  b.type = 'button';
+  b.dataset.group = g.key;
+  b.dataset.id = opt.id;
+  b.setAttribute('aria-pressed', 'false');
+  if (g.view === 'tile') {
+    const th = el('span', 'thumb');
+    if (opt.icon) th.appendChild(el('span', 'mi', opt.icon));
+    const img = new Image();
+    img.alt = '';
+    img.onload = function () { th.insertBefore(img, th.firstChild); th.classList.add('has-img'); };
+    img.src = 'img/' + opt.id + '.jpg';
+    b.appendChild(th);
+    b.appendChild(el('span', 'lbl', label));
+    b.appendChild(el('span', 'sub', isEn() ? opt.zh : opt.en));
+  } else {
+    b.textContent = label;
+    if (opt.color) {
+      b.classList.add('color');
+      b.style.background = opt.color;
+      b.style.color = inkFor(opt.color);
+      b.style.borderColor = opt.color;
+    }
+  }
+  b.addEventListener('click', function () { toggle(g, opt.id); });
+  return b;
+}
+
+function textInput(cls, getVal, setVal, placeholder, label) {
+  const inp = el('input', cls);
+  inp.type = 'text';
+  inp.maxLength = 80;
+  inp.placeholder = placeholder;
+  if (label) inp.setAttribute('aria-label', label);
+  inp.value = getVal() || '';
+  inp.addEventListener('input', function () { setVal(inp.value); save(); updatePreview(); queueTranslate(); });
+  return inp;
+}
+
+function buildCards() {
+  const root = document.getElementById('cards');
+  root.innerHTML = '';
+  visibleCards().forEach((card, idx) => {
+    const sec = el('section', 'card');
+    const h = el('h2');
+    h.appendChild(el('span', 'num', String(idx + 1)));
+    h.appendChild(document.createTextNode(L(card.title, card.titleEn)));
+    sec.appendChild(h);
+    sec.appendChild(el('p', 'hint', L(card.hint, card.hintEn)));
+    card.groups.filter(groupVisible).forEach(g => {
+      const fs = el('fieldset');
+      const legend = L(g.label, g.labelEn);
+      fs.appendChild(el('legend', null, legend));
+      const wrap = el('div', g.view === 'tile' ? 'tiles' : 'opts');
+      g.opts.filter(optVisible).forEach(opt => wrap.appendChild(makeOption(g, opt)));
+      fs.appendChild(wrap);
+      if (g.custom) {
+        fs.appendChild(textInput('gcustom', () => state.gtext[g.key], v => { state.gtext[g.key] = v; }, UI.customPh, legend + ': ' + UI.customPh));
+      }
+      sec.appendChild(fs);
+    });
+    if (card.text) {
+      const lab = el('label', 'field');
+      lab.appendChild(el('span', null, L(card.text.label, card.text.labelEn)));
+      lab.appendChild(textInput(null, () => state.text[card.text.key], v => { state.text[card.text.key] = v; }, L(card.text.placeholder, card.text.placeholderEn)));
+      sec.appendChild(lab);
+    }
+    root.appendChild(sec);
+  });
+}
+
+function toggle(g, id) {
+  const cur = state.sel[g.key];
+  const i = cur.indexOf(id);
+  if (g.mode === 'single') {
+    state.sel[g.key] = i >= 0 ? [] : [id];
+  } else if (i >= 0) {
+    cur.splice(i, 1);
+  } else {
+    if (cur.length >= (g.max || 99)) cur.shift();
+    cur.push(id);
+  }
+  save();
+  refresh();
+}
+
+function refresh() {
+  document.querySelectorAll('[data-group]').forEach(b => {
+    const on = state.sel[b.dataset.group].indexOf(b.dataset.id) >= 0;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.classList.toggle('on', on);
+  });
+  updatePreview();
+}
+
+/* ---------- 自己寫的文字：英文版用瀏覽器內建翻譯（沒有就維持原文） ---------- */
+const trans = {};
+let translator = null;
+let translatorGaveUp = false;
+const CJK = /[㐀-鿿]/;
+
+function customStrings() {
+  const out = [];
+  const vis = visibleGroupKeys();
+  vis.forEach(k => { const v = (state.gtext[k] || '').trim(); if (v) out.push(v); });
+  visibleCards().forEach(c => { if (c.text) { const v = (state.text[c.text.key] || '').trim(); if (v) out.push(v); } });
+  return out.filter(v => CJK.test(v));
+}
+function withTimeout(p, ms) {
+  return Promise.race([p, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+}
+async function ensureTranslator() {
+  if (translator || translatorGaveUp) return translator;
+  if (!('Translator' in self)) { translatorGaveUp = true; return null; }
+  for (const src of ['zh-Hant', 'zh']) {
+    try {
+      const opts = { sourceLanguage: src, targetLanguage: 'en' };
+      const a = await withTimeout(Translator.availability(opts), 5000);
+      if (a === 'unavailable') continue;
+      translator = await withTimeout(Translator.create(opts), 90000);
+      return translator;
+    } catch (e) { /* 下載模型需要點擊動作，或太久沒回應，下次再試 */ }
+  }
+  return null;
+}
+async function translatePending() {
+  if (state.lang !== 'en') return;
+  const todo = customStrings().filter(v => !(v in trans));
+  if (todo.length) {
+    const tl = await ensureTranslator();
+    if (tl) {
+      for (const v of todo) {
+        try { trans[v] = await tl.translate(v); } catch (e) { /* 這句翻不了就維持原文 */ }
+      }
+    }
+  }
+  updatePreview();
+}
+let translateTimer = null;
+function queueTranslate() {
+  if (state.lang !== 'en') return;
+  clearTimeout(translateTimer);
+  translateTimer = setTimeout(translatePending, 600);
+}
+function tr(raw, lang) { return lang === 'en' && trans[raw] ? trans[raw] : raw; }
+
+/* ---------- 組提示詞（提示詞的語言和介面語言各自獨立） ---------- */
+function words(keys, lang) {
+  const out = [];
+  const vis = visibleGroupKeys();
+  keys.filter(k => vis.indexOf(k) >= 0).forEach(k => {
+    picked(k).forEach(o => out.push(lang === 'zh' ? o.zh : o.en));
+    const own = (state.gtext[k] || '').trim();
+    if (own) out.push(tr(own, lang));
+  });
+  return out;
+}
+/* 髮色、髮長、髮型組成一句：黑色長髮，直髮 / long black hair, straight hair */
+function hairPhrases(lang) {
+  const c = picked('hairColor')[0];
+  const l = picked('hairLength')[0];
+  const st = picked('hairStyle')[0];
+  const out = [];
+  const cw = c ? (lang === 'zh' ? c.zh : c.en) : '';
+  const lw = l ? (lang === 'zh' ? l.zh : l.en) : '';
+  if (lang === 'zh') {
+    if (cw && lw) out.push(cw + lw);
+    else if (cw) out.push(cw + DATA.ui.zh.hairWord);
+    else if (lw) out.push(lw);
+  } else {
+    const adj = [lw, cw].filter(Boolean).join(' ');
+    if (adj) out.push(adj + ' ' + DATA.ui.en.hairWord);
+  }
+  if (st) out.push(lang === 'zh' ? st.zh : st.en);
+  ['hairColor', 'hairLength', 'hairStyle'].forEach(k => { const v = (state.gtext[k] || '').trim(); if (v) out.push(tr(v, lang)); });
+  return out;
+}
+function compose() {
+  const lang = state.lang;
+  const lab = lang === 'zh' ? ZH.labZh : ZH.labEn;
+  const head = lang === 'zh' ? ZH.headZh : ZH.headEn;
+  const sep = lang === 'zh' ? '，' : ', ';
+  const csep = lang === 'zh' ? '、' : ', ';
+  const colon = lang === 'zh' ? '：' : ': ';
+  const lines = [];
+  function add(label, parts, s) {
+    const p = parts.filter(Boolean);
+    if (p.length) lines.push(label + colon + p.join(s));
+  }
+  const t = function (k) { return tr((state.text[k] || '').trim(), lang); };
+  const hasSubject = TAB_CARDS[state.tab].indexOf('subject') >= 0;
+  const hasScene = TAB_CARDS[state.tab].indexOf('scene') >= 0;
+  add(lab[4], words(['style'], lang), csep);
+  add(lab[5], words(['ratio'], lang), csep);
+  if (hasSubject) {
+    const subject = words(['type', 'proportion', 'build'], lang)
+      .concat(hairPhrases(lang))
+      .concat(words(['eyes', 'outfit', 'accessory', 'mood'], lang))
+      .concat([t('extra')]);
+    add(lab[0], subject, sep);
+  }
+  if (hasScene) {
+    add(lab[1], words(['place'], lang).concat([t('placeText')]), sep);
+    add(lab[2], words(['distance', 'sceneDistance', 'angle'], lang), csep);
+    add(lab[3], words(['light'], lang), csep);
+    add(lab[6], words(['avoid'], lang).concat([t('avoidText')]), csep);
+  }
+  if (!lines.length) return '';
+  return (state.prefix ? head + '\n' : '') + lines.join('\n');
+}
+
+const MISS_KEYS = [['type'], ['place'], ['distance', 'sceneDistance'], ['angle'], ['light'], ['style']];
+function updatePreview() {
+  const text = compose();
+  document.getElementById('out').value = text;
+  const vis = visibleGroupKeys();
+  const miss = [];
+  MISS_KEYS.forEach((keys, i) => {
+    const seen = keys.filter(k => vis.indexOf(k) >= 0);
+    if (seen.length && seen.every(k => !picked(k).length && !(state.gtext[k] || '').trim())) miss.push(UI.missNames[i]);
+  });
+  const box = document.getElementById('miss');
+  if (text && miss.length) {
+    const sp = isEn() ? ' ' : '';
+    box.hidden = false;
+    box.textContent = UI.missPrefix + sp + miss.join(isEn() ? ', ' : '、') + sp + UI.missSuffix;
+  } else {
+    box.hidden = true;
+  }
+  const note = document.getElementById('transNote');
+  note.hidden = !(state.lang === 'en' && customStrings().some(v => !trans[v]));
+  document.getElementById('langZh').setAttribute('aria-pressed', state.lang === 'zh' ? 'true' : 'false');
+  document.getElementById('langEn').setAttribute('aria-pressed', state.lang === 'en' ? 'true' : 'false');
+  document.getElementById('prefix').checked = state.prefix;
+}
+
+/* ---------- 複製 ---------- */
+function setCopyStatus(msg, ok) {
+  const s = document.getElementById('copyStatus');
+  s.textContent = msg;
+  s.className = 'status ' + (ok ? 'ok' : 'err');
+  clearTimeout(setCopyStatus.t);
+  setCopyStatus.t = setTimeout(function () { s.textContent = ''; }, 3500);
+}
+async function copyPrompt() {
+  const text = compose();
+  if (!text) { setCopyStatus(UI.copyEmpty, false); return false; }
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const out = document.getElementById('out');
+    out.focus();
+    out.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+    if (!ok) { setCopyStatus(UI.copyFail, false); return false; }
+  }
+  setCopyStatus(UI.copyOk, true);
+  maybeShowFeedback();
+  return true;
+}
+
+/* ---------- 隨機 ---------- */
+function randomFill() {
+  const vis = visibleGroupKeys();
+  ['type', 'proportion', 'build', 'hairColor', 'hairLength', 'hairStyle', 'eyes', 'outfit', 'accessory', 'mood', 'place', 'distance', 'sceneDistance', 'angle', 'light', 'style', 'ratio'].filter(k => vis.indexOf(k) >= 0).forEach(k => {
+    const opts = GROUPS[k].opts.filter(optVisible);
+    if (!opts.length) return;
+    state.sel[k] = [opts[Math.floor(Math.random() * opts.length)].id];
+  });
+  /* 馬尾、雙馬尾要有一定長度，隨機時避免「短髮＋馬尾」 */
+  if (['hs_twin', 'hs_pony', 'hs_side'].indexOf((state.sel.hairStyle || [])[0]) >= 0 && (state.sel.hairLength || []).length) state.sel.hairLength = ['hl_long'];
+  save();
+  refresh();
+}
+
+/* ---------- 複製後跳出的小問卷（送出的值一律用中文，方便統計） ---------- */
+const fb = { change: '', helpful: '', worked: '', ai: '' };
+let fbShown = false;
+function getSession(k) { try { return sessionStorage.getItem(k) === '1'; } catch (e) { return false; } }
+function setSession(k) { try { sessionStorage.setItem(k, '1'); } catch (e) {} }
+let fbDone = getSession('pt-fb-done');
+
+function buildChoices(id, key, labels, values, withNumber) {
+  const wrap = document.getElementById(id);
+  wrap.innerHTML = '';
+  labels.forEach(function (label, i) {
+    const b = el('button');
+    b.type = 'button';
+    const value = withNumber ? String(i + 1) : (values[i] || label);
+    b.setAttribute('aria-pressed', fb[key] === value ? 'true' : 'false');
+    if (withNumber) {
+      b.appendChild(document.createTextNode(String(i + 1)));
+      b.appendChild(el('small', null, label));
+    } else {
+      b.textContent = label;
+    }
+    b.addEventListener('click', function () {
+      const same = fb[key] === value;
+      fb[key] = same ? '' : value;
+      wrap.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', !same && x === b ? 'true' : 'false'));
+    });
+    wrap.appendChild(b);
+  });
+}
+function buildAllChoices() {
+  buildChoices('qChange', 'change', UI.qWaitOpts, ZH.qWaitOpts, false);
+  buildChoices('qHelpful', 'helpful', UI.q1Opts, ZH.q1Opts, true);
+  buildChoices('qWorked', 'worked', UI.q2Opts, ZH.q2Opts, false);
+  buildChoices('qAi', 'ai', UI.q3Opts, ZH.q3Opts, false);
+}
+function fbMsg(msg, ok) {
+  const s = document.getElementById('fbStatus');
+  s.textContent = msg;
+  s.className = 'status ' + (ok ? 'ok' : 'err');
+}
+function openDialog() {
+  const d = document.getElementById('fbDialog');
+  document.getElementById('fbFab').hidden = true;
+  if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+}
+function closeDialog() {
+  const d = document.getElementById('fbDialog');
+  if (d.close) d.close(); else d.removeAttribute('open');
+}
+function maybeShowFeedback() {
+  if (fbDone || fbShown) return;
+  fbShown = true;
+  openDialog();
+}
+async function submitFeedback(ev) {
+  ev.preventDefault();
+  if (!fb.helpful) { fbMsg(UI.fbNeedQ1, false); return; }
+  if (!CONFIG.ENDPOINT) { fbMsg(UI.fbNoForm, false); return; }
+  const payload = Object.assign({}, CONFIG.EXTRA, {
+    tool: 'prompt-tool',
+    tab: state.tab,
+    lang: state.lang,
+    ui: state.ui,
+    helpful: fb.helpful,
+    worked: fb.worked,
+    ai: fb.ai,
+    change: fb.change,
+    comment: document.getElementById('qComment').value.trim()
+  });
+  if (document.getElementById('qSendPrompt').checked) payload.prompt = compose();
+  const btn = document.getElementById('fbSubmit');
+  btn.disabled = true;
+  try {
+    const res = await fetch(CONFIG.ENDPOINT, {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json', 'Accept': 'application/json' }, CONFIG.HEADERS),
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    fbDone = true;
+    setSession('pt-fb-done');
+    fbMsg(UI.fbOk, true);
+    setTimeout(closeDialog, 1500);
+  } catch (e) {
+    fbMsg(UI.fbErr, false);
+    btn.disabled = false;
+  }
+}
+
+/* ---------- 分頁、介面語言 ---------- */
+function updateTabs() {
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === state.tab ? 'true' : 'false'));
+}
+function setTab(t) {
+  state.tab = t;
+  save();
+  buildCards();
+  updateTabs();
+  refresh();
+  queueTranslate();
+}
+function setUi(l) {
+  if (state.ui === l) return;
+  state.ui = l;
+  state.lang = l === 'en' ? 'en' : 'zh';   /* 換介面語言時，提示詞語言跟著換（之後還是可以再改） */
+  save();
+  applyUi();
+  buildCards();
+  buildAllChoices();
+  refresh();
+  translatePending();
+}
+
+/* ---------- 啟動 ---------- */
+applyUi();
+buildCards();
+buildAllChoices();
+updateTabs();
+refresh();
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', function () { setTab(b.dataset.tab); }));
+document.getElementById('uiZh').addEventListener('click', function () { setUi('zh'); });
+document.getElementById('uiEn').addEventListener('click', function () { setUi('en'); });
+document.getElementById('langZh').addEventListener('click', function () { state.lang = 'zh'; save(); updatePreview(); });
+document.getElementById('langEn').addEventListener('click', function () { state.lang = 'en'; save(); updatePreview(); translatePending(); });
+document.getElementById('prefix').addEventListener('change', function (e) { state.prefix = e.target.checked; save(); updatePreview(); });
+document.getElementById('copy').addEventListener('click', copyPrompt);
+document.getElementById('copyM').addEventListener('click', copyPrompt);
+document.getElementById('openGemini').addEventListener('click', copyPrompt);
+document.getElementById('openGpt').addEventListener('click', copyPrompt);
+document.getElementById('random').addEventListener('click', randomFill);
+document.getElementById('randomM').addEventListener('click', randomFill);
+document.getElementById('fbForm').addEventListener('submit', submitFeedback);
+document.getElementById('fbLater').addEventListener('click', closeDialog);
+document.getElementById('fbFab').addEventListener('click', openDialog);
+document.getElementById('fbDialog').addEventListener('close', function () { if (!fbDone) document.getElementById('fbFab').hidden = false; });
+if (state.lang === 'en') queueTranslate();
+</script>
+</body>
+</html>

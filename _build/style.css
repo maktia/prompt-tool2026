@@ -1,0 +1,110 @@
+:root{
+  --bg:#8C6A5E; --paper:#FFFDF8; --cream:#FFF4E0; --line:#F3C27A; --ink:#3F2D25; --sub:#6B5A50;
+  --brown:#8F4F06; --orange:#B35F0A; --orange-soft:#FBE3B8; --teal:#3F7468; --red:#B5412F; --ok:#2F6E4C;
+  --outline:#3F2D25;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #1d4ed8;outline-offset:3px}
+
+/* Material Symbols：字型載入成功才顯示，失敗就乾脆不顯示圖示 */
+.mi{display:none;font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:"liga";font-feature-settings:"liga";-webkit-font-smoothing:antialiased}
+html.mi-ready .mi{display:inline-block;vertical-align:middle}
+
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 60px}
+header.top,.card,.box{background:var(--paper);border:3px solid var(--line);border-radius:20px;padding:18px 22px;margin-bottom:18px}
+header.top{padding:20px 24px}
+header.top h1{margin:0;font-size:clamp(1.5rem,3.4vw,2.1rem);color:var(--brown);display:flex;align-items:center;gap:10px}
+header.top h1 .mi{font-size:1.1em}
+header.top p{margin:6px 0 0;color:var(--sub)}
+.tabs{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.tab{border:2px solid var(--line);background:var(--cream);border-radius:999px;padding:8px 22px;font-weight:700;min-height:44px}
+.tab[aria-selected="true"]{background:var(--orange);border-color:var(--orange);color:#fff}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:22px;align-items:start}
+.panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding:4px 10px 10px 4px}
+.card h2{margin:0;font-size:1.35rem;color:var(--brown);display:flex;align-items:center;gap:10px}
+.num{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--orange);color:#fff;font-size:1rem}
+.hint{margin:2px 0 10px;color:var(--sub);font-size:.95rem}
+fieldset{border:0;margin:14px 0 0;padding:0;min-width:0}
+legend{font-weight:700;margin-bottom:8px;padding:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.chip.color{font-weight:700;text-shadow:none}
+.chip.color.on{outline:4px solid var(--ink);outline-offset:2px}
+.chip.color.on::before{content:"✓ "}
+
+/* 選項：圓角膠囊、實線外框 */
+.chip{border:2px solid var(--line);background:var(--cream);border-radius:999px;padding:6px 16px;min-height:44px}
+.chip.on,.tile.on{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid var(--line);background:var(--cream);border-radius:16px;padding:8px;text-align:center}
+.thumb{display:grid;place-items:center;width:100%;aspect-ratio:4/3;border-radius:10px;background:#fff;overflow:hidden;color:var(--brown)}
+.thumb .mi{font-size:44px}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.has-img .mi{display:none!important}
+.lbl{font-weight:700}
+.sub{font-size:.78rem;opacity:.85;line-height:1.3}
+.tile.on .sub{opacity:1}
+.gcustom{display:block;width:100%;margin-top:8px;border:2px dashed var(--line);border-radius:12px;padding:8px 12px;background:#fff}
+.gcustom:focus{border-style:solid}
+.field{display:block;margin-top:14px}
+.field span{display:block;font-weight:700;margin-bottom:4px}
+.field input,.field textarea{width:100%;border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.box h2{margin:0 0 8px;font-size:1.25rem;color:var(--brown)}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:999px;overflow:hidden;background:var(--cream)}
+.seg button{border:0;background:transparent;padding:6px 18px;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--teal);color:#fff;font-weight:700}
+#out{width:100%;min-height:250px;margin-top:12px;border:2px solid var(--line);border-radius:12px;padding:12px;background:#fff;resize:vertical;white-space:pre-wrap;line-height:1.7}
+.row{display:flex;flex-wrap:wrap;gap:20px 26px;margin-top:16px;padding-left:8px}
+.row.stack{flex-direction:column;align-items:stretch;gap:16px;padding-right:8px}
+
+/* 動作按鈕：膠囊形實色，後面錯開一圈黑色外框，圖示在右邊 */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:10px 30px;margin:0 0 8px 8px;border:0;border-radius:999px;font-weight:700;letter-spacing:.04em;text-decoration:none;color:#fff;
+  box-shadow:-7px 7px 0 0 var(--paper),-7px 7px 0 3px var(--outline);transition:transform .08s,box-shadow .08s}
+html.mi-ready .btn{padding-right:60px}
+.btn .mi{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:26px}
+.btn:active{transform:translate(-3px,3px);box-shadow:-4px 4px 0 0 var(--paper),-4px 4px 0 3px var(--outline)}
+.btn.primary{background:var(--orange)}
+.btn.teal{background:var(--teal)}
+.btn.ghost{background:var(--orange-soft);color:var(--ink)}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.note{font-size:.9rem;color:var(--sub);margin:12px 0 0}
+.miss{background:var(--orange-soft);border-radius:12px;padding:8px 12px;font-size:.92rem;margin-top:10px}
+.check{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:.95rem}
+.check input{margin-top:6px;width:20px;height:20px;accent-color:var(--orange)}
+.status{margin-top:10px;font-weight:700}
+.status.ok{color:var(--ok)} .status.err{color:var(--red)}
+footer{color:#FFF4E0;font-size:.88rem;margin-top:8px;padding:0 6px}
+
+/* 複製後跳出的小問卷 */
+dialog#fbDialog{width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;border:4px solid var(--line);border-radius:20px;background:var(--paper);color:var(--ink);padding:22px 24px}
+dialog#fbDialog::backdrop{background:rgba(63,45,37,.6)}
+dialog#fbDialog h2{margin:0 0 6px;color:var(--brown);font-size:1.3rem}
+.fbpart{margin:18px 0 0;padding:6px 12px;border-radius:8px;background:var(--orange-soft);font-weight:700;color:var(--brown)}
+.q{margin-top:14px}
+.q p{margin:0 0 6px;font-weight:700}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.scale button,.pick button{border:2px solid var(--line);background:var(--cream);border-radius:12px;padding:8px 4px;min-height:44px}
+.scale small{display:block;font-size:.72rem;opacity:.85}
+.pick{display:flex;flex-wrap:wrap;gap:6px}
+.pick button{padding:8px 16px;border-radius:999px}
+.scale button[aria-pressed="true"],.pick button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+.fbtn{display:flex;flex-wrap:wrap;gap:16px 24px;margin-top:20px;padding-left:8px}
+.fab{position:fixed;right:20px;bottom:24px;z-index:20}
+.fab[hidden]{display:none}
+
+/* 手機：提示詞區塊排在卡片後面，底部固定「複製、隨機」 */
+.mobilebar{display:none}
+@media (max-width:960px){
+  .layout{grid-template-columns:1fr}
+  .panel{position:static;max-height:none;padding:0}
+  .wrap{padding-bottom:130px}
+  .mobilebar{display:flex;justify-content:center;gap:14px 26px;position:fixed;left:0;right:0;bottom:0;padding:12px 18px 20px 26px;background:var(--paper);border-top:3px solid var(--line);z-index:10}
+  .mobilebar .btn{flex:1;max-width:280px;margin-bottom:6px}
+  .fab{bottom:96px}
+}
+@media (max-width:480px){.btn{letter-spacing:0}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}

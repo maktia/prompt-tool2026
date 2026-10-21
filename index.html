@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>提示詞填空小工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=accessibility_new,arrow_downward,arrow_forward,arrow_upward,auto_awesome,brush,casino,chat,close,cloud,content_copy,contrast,crop_landscape,crop_square,dark_mode,directions_walk,edit,face,flare,grid_view,landscape,lightbulb,menu_book,movie,nightlife,open_in_new,palette,panorama,person,photo_camera,rotate_right,search,send,sentiment_satisfied,videocam,visibility,water_drop,wb_sunny,wb_twilight,window&display=block">
+<style>
+:root{
+  --bg:#8C6A5E; --paper:#FFFDF8; --cream:#FFF4E0; --line:#F3C27A; --ink:#3F2D25; --sub:#6B5A50;
+  --brown:#8F4F06; --orange:#B35F0A; --orange-soft:#FBE3B8; --teal:#3F7468; --red:#B5412F; --ok:#2F6E4C;
+  --outline:#3F2D25;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #1d4ed8;outline-offset:3px}
+
+/* Material Symbols：字型載入成功才顯示，失敗就乾脆不顯示圖示 */
+.mi{display:none;font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:"liga";font-feature-settings:"liga";-webkit-font-smoothing:antialiased}
+html.mi-ready .mi{display:inline-block;vertical-align:middle}
+
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 60px}
+header.top,.card,.box{background:var(--paper);border:3px solid var(--line);border-radius:20px;padding:18px 22px;margin-bottom:18px}
+header.top{padding:20px 24px}
+header.top h1{margin:0;font-size:clamp(1.5rem,3.4vw,2.1rem);color:var(--brown);display:flex;align-items:center;gap:10px}
+header.top h1 .mi{font-size:1.1em}
+header.top p{margin:6px 0 0;color:var(--sub)}
+.tabs{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.tab{border:2px solid var(--line);background:var(--cream);border-radius:999px;padding:8px 22px;font-weight:700;min-height:44px}
+.tab[aria-selected="true"]{background:var(--orange);border-color:var(--orange);color:#fff}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:22px;align-items:start}
+.panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding:4px 10px 10px 4px}
+.card h2{margin:0;font-size:1.35rem;color:var(--brown);display:flex;align-items:center;gap:10px}
+.num{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--orange);color:#fff;font-size:1rem}
+.hint{margin:2px 0 10px;color:var(--sub);font-size:.95rem}
+fieldset{border:0;margin:14px 0 0;padding:0;min-width:0}
+legend{font-weight:700;margin-bottom:8px;padding:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.chip.color{font-weight:700;text-shadow:none}
+.chip.color.on{outline:4px solid var(--ink);outline-offset:2px}
+.chip.color.on::before{content:"✓ "}
+
+/* 選項：圓角膠囊、實線外框 */
+.chip{border:2px solid var(--line);background:var(--cream);border-radius:999px;padding:6px 16px;min-height:44px}
+.chip.on,.tile.on{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid var(--line);background:var(--cream);border-radius:16px;padding:8px;text-align:center}
+.thumb{display:grid;place-items:center;width:100%;aspect-ratio:4/3;border-radius:10px;background:#fff;overflow:hidden;color:var(--brown)}
+.thumb .mi{font-size:44px}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.has-img .mi{display:none!important}
+.lbl{font-weight:700}
+.sub{font-size:.78rem;opacity:.85;line-height:1.3}
+.tile.on .sub{opacity:1}
+.gcustom{display:block;width:100%;margin-top:8px;border:2px dashed var(--line);border-radius:12px;padding:8px 12px;background:#fff}
+.gcustom:focus{border-style:solid}
+.field{display:block;margin-top:14px}
+.field span{display:block;font-weight:700;margin-bottom:4px}
+.field input,.field textarea{width:100%;border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.box h2{margin:0 0 8px;font-size:1.25rem;color:var(--brown)}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:999px;overflow:hidden;background:var(--cream)}
+.seg button{border:0;background:transparent;padding:6px 18px;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--teal);color:#fff;font-weight:700}
+#out{width:100%;min-height:250px;margin-top:12px;border:2px solid var(--line);border-radius:12px;padding:12px;background:#fff;resize:vertical;white-space:pre-wrap;line-height:1.7}
+.row{display:flex;flex-wrap:wrap;gap:20px 26px;margin-top:16px;padding-left:8px}
+.row.stack{flex-direction:column;align-items:stretch;gap:16px;padding-right:8px}
+
+/* 動作按鈕：膠囊形實色，後面錯開一圈黑色外框，圖示在右邊 */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:10px 30px;margin:0 0 8px 8px;border:0;border-radius:999px;font-weight:700;letter-spacing:.04em;text-decoration:none;color:#fff;
+  box-shadow:-7px 7px 0 0 var(--paper),-7px 7px 0 3px var(--outline);transition:transform .08s,box-shadow .08s}
+html.mi-ready .btn{padding-right:60px}
+.btn .mi{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:26px}
+.btn:active{transform:translate(-3px,3px);box-shadow:-4px 4px 0 0 var(--paper),-4px 4px 0 3px var(--outline)}
+.btn.primary{background:var(--orange)}
+.btn.teal{background:var(--teal)}
+.btn.ghost{background:var(--orange-soft);color:var(--ink)}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.note{font-size:.9rem;color:var(--sub);margin:12px 0 0}
+.miss{background:var(--orange-soft);border-radius:12px;padding:8px 12px;font-size:.92rem;margin-top:10px}
+.check{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:.95rem}
+.check input{margin-top:6px;width:20px;height:20px;accent-color:var(--orange)}
+.status{margin-top:10px;font-weight:700}
+.status.ok{color:var(--ok)} .status.err{color:var(--red)}
+footer{color:#FFF4E0;font-size:.88rem;margin-top:8px;padding:0 6px}
+
+/* 複製後跳出的小問卷 */
+dialog#fbDialog{width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;border:4px solid var(--line);border-radius:20px;background:var(--paper);color:var(--ink);padding:22px 24px}
+dialog#fbDialog::backdrop{background:rgba(63,45,37,.6)}
+dialog#fbDialog h2{margin:0 0 6px;color:var(--brown);font-size:1.3rem}
+.fbpart{margin:18px 0 0;padding:6px 12px;border-radius:8px;background:var(--orange-soft);font-weight:700;color:var(--brown)}
+.q{margin-top:14px}
+.q p{margin:0 0 6px;font-weight:700}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.scale button,.pick button{border:2px solid var(--line);background:var(--cream);border-radius:12px;padding:8px 4px;min-height:44px}
+.scale small{display:block;font-size:.72rem;opacity:.85}
+.pick{display:flex;flex-wrap:wrap;gap:6px}
+.pick button{padding:8px 16px;border-radius:999px}
+.scale button[aria-pressed="true"],.pick button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+.fbtn{display:flex;flex-wrap:wrap;gap:16px 24px;margin-top:20px;padding-left:8px}
+.fab{position:fixed;right:20px;bottom:24px;z-index:20}
+.fab[hidden]{display:none}
+
+/* 手機：提示詞區塊排在卡片後面，底部固定「複製、隨機」 */
+.mobilebar{display:none}
+@media (max-width:960px){
+  .layout{grid-template-columns:1fr}
+  .panel{position:static;max-height:none;padding:0}
+  .wrap{padding-bottom:130px}
+  .mobilebar{display:flex;justify-content:center;gap:14px 26px;position:fixed;left:0;right:0;bottom:0;padding:12px 18px 20px 26px;background:var(--paper);border-top:3px solid var(--line);z-index:10}
+  .mobilebar .btn{flex:1;max-width:280px;margin-bottom:6px}
+  .fab{bottom:96px}
+}
+@media (max-width:480px){.btn{letter-spacing:0}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="toprow">
+      <h1><span class="mi">palette</span><span data-ui="h1"></span></h1>
+      <div class="seg" role="group" aria-label="Interface language / 介面語言">
+        <button type="button" id="uiZh" aria-pressed="true">中文</button>
+        <button type="button" id="uiEn" aria-pressed="false">EN</button>
+      </div>
+    </div>
+    <p data-ui="intro"></p>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="person" aria-selected="true" data-ui="tabPerson"></button>
+      <button class="tab" role="tab" data-tab="scene" aria-selected="false" data-ui="tabScene"></button>
+      <button class="tab" role="tab" data-tab="both" aria-selected="false" data-ui="tabBoth"></button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main id="cards"></main>
+
+    <aside class="panel">
+      <section class="box">
+        <h2 data-ui="outTitle"></h2>
+        <div class="row" style="margin-top:0;align-items:center;padding-left:0">
+          <div class="seg" role="group">
+            <button type="button" id="langZh" aria-pressed="true" data-ui="langZh"></button>
+            <button type="button" id="langEn" aria-pressed="false" data-ui="langEn"></button>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="prefix" checked><span data-ui="prefixLabel"></span></label>
+        <textarea id="out" readonly></textarea>
+        <div id="miss" class="miss" hidden></div>
+        <div id="transNote" class="miss" hidden data-ui="transNote"></div>
+        <div class="row stack">
+          <button type="button" class="btn primary" id="copy"><span class="mi">content_copy</span><span data-ui="btnCopy"></span></button>
+          <button type="button" class="btn ghost" id="random"><span class="mi">casino</span><span data-ui="btnRandom"></span></button>
+          <a class="btn teal" id="openGemini" href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer"><span class="mi">open_in_new</span><span data-ui="btnGemini"></span></a>
+          <a class="btn teal" id="openGpt" href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer"><span class="mi">open_in_new</span><span data-ui="btnGpt"></span></a>
+        </div>
+        <p class="note" data-ui="tip"></p>
+        <div id="copyStatus" class="status" role="status" aria-live="polite"></div>
+      </section>
+    </aside>
+  </div>
+  <footer data-ui="footer"></footer>
+</div>
+
+<div class="mobilebar">
+  <button type="button" class="btn primary" id="copyM"><span class="mi">content_copy</span><span data-ui="btnCopy"></span></button>
+  <button type="button" class="btn ghost" id="randomM"><span class="mi">casino</span><span data-ui="btnRandom"></span></button>
+</div>
+
+<button type="button" class="btn primary fab" id="fbFab" hidden><span class="mi">chat</span><span data-ui="btnReopen"></span></button>
+
+<dialog id="fbDialog" aria-labelledby="fbTitle">
+  <form id="fbForm" novalidate>
+    <h2 id="fbTitle" data-ui="modalTitle"></h2>
+    <p class="note" data-ui="modalIntro"></p>
+    <p class="note" data-ui="fbNote"></p>
+
+    <p class="fbpart" data-ui="fbPart1"></p>
+    <div class="q"><p data-ui="qWait"></p><div class="pick" id="qChange" role="group"></div></div>
+    <div class="q"><p data-ui="q1"></p><div class="scale" id="qHelpful" role="group"></div></div>
+
+    <p class="fbpart" data-ui="fbPart2"></p>
+    <div class="q"><p data-ui="q2"></p><div class="pick" id="qWorked" role="group"></div></div>
+    <div class="q"><p data-ui="q3"></p><div class="pick" id="qAi" role="group"></div></div>
+    <label class="field"><span data-ui="q4"></span><textarea id="qComment" rows="3" maxlength="600" data-ui-ph="q4Ph"></textarea></label>
+    <label class="check"><input type="checkbox" id="qSendPrompt"><span data-ui="consent"></span></label>
+
+    <div class="fbtn">
+      <button type="submit" class="btn primary" id="fbSubmit"><span class="mi">send</span><span data-ui="submit"></span></button>
+      <button type="button" class="btn ghost" id="fbLater"><span class="mi">close</span><span data-ui="btnLater"></span></button>
+    </div>
+    <div id="fbStatus" class="status" role="status" aria-live="polite"></div>
+  </form>
+</dialog>
+
+<script>
+'use strict';
+/* ===== 老師設定區（回收學生的小問卷）=====
+   不用 Google 表單。把下面三項依你選的服務填好（步驟請看 README.md）：
+   - Web3Forms：ENDPOINT 'https://api.web3forms.com/submit'，EXTRA 填 { access_key: '你的金鑰', subject: '提示詞工具回饋' }
+   - Formspree：ENDPOINT 'https://formspree.io/f/你的代號'
+   - Supabase：ENDPOINT 'https://專案.supabase.co/rest/v1/feedback'，HEADERS 填 apikey 與 Authorization
+   沒填 ENDPOINT 的話，學生按「送出」只會看到提示，不會真的傳送。 */
+const CONFIG = {
+  ENDPOINT: 'https://api.web3forms.com/submit',
+  HEADERS: {},
+  EXTRA: { access_key: '6b141ce7-a34b-4608-98ea-0edbdde5c45f', subject: '提示詞工具回饋' }
+};
+
+const DATA = {"cards": [{"key": "subject", "title": "人物", "titleEn": "Character", "hint": "畫誰？外觀、服裝、表情動作", "hintEn": "Who are you drawing? Look, outfit, expression and pose", "text": {"key": "extra", "label": "想再補充什麼？（選填）", "labelEn": "Anything to add? (optional)", "placeholder": "例：戴著圓框眼鏡、背著吉他", "placeholderEn": "e.g. round glasses, carrying a guitar"}, "groups": [{"key": "type", "label": "類型", "labelEn": "Type", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "girl", "zh": "少女", "en": "a teenage girl", "icon": "", "labelEn": "Teenage girl"}, {"id": "boy", "zh": "少年", "en": "a teenage boy", "icon": "", "labelEn": "Teenage boy"}, {"id": "woman", "zh": "成年女性", "en": "an adult woman", "icon": "", "labelEn": "Adult woman"}, {"id": "man", "zh": "成年男性", "en": "an adult man", "icon": "", "labelEn": "Adult man"}, {"id": "grandma", "zh": "老奶奶", "en": "an elderly woman", "icon": "", "labelEn": "Elderly woman"}, {"id": "grandpa", "zh": "老爺爺", "en": "an elderly man", "icon": "", "labelEn": "Elderly man"}, {"id": "child", "zh": "小孩", "en": "a little child", "icon": "", "labelEn": "Little child"}, {"id": "catgirl", "zh": "貓耳少女", "en": "a girl with cat ears", "icon": "", "labelEn": "Girl with cat ears"}, {"id": "robot", "zh": "小機器人", "en": "a cute little robot", "icon": "", "labelEn": "Cute little robot"}], "custom": true}, {"key": "proportion", "label": "頭身比", "labelEn": "Head-to-body ratio", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "pr_1", "zh": "1 頭身（超 Q 版）", "en": "super-deformed chibi, 1 head tall", "icon": "", "labelEn": "Super chibi (1 head)"}, {"id": "pr_2", "zh": "2 頭身（Q 版）", "en": "chibi, 2 heads tall", "icon": "", "labelEn": "Chibi (2 heads)"}, {"id": "pr_3", "zh": "3 頭身", "en": "3 heads tall, cute stylized proportions", "icon": "", "labelEn": "3 heads tall"}, {"id": "pr_5", "zh": "5 頭身", "en": "5 heads tall proportions", "icon": "", "labelEn": "5 heads tall"}, {"id": "pr_6", "zh": "6 頭身", "en": "6 heads tall proportions", "icon": "", "labelEn": "6 heads tall"}, {"id": "pr_7", "zh": "7 頭身（寫實比例）", "en": "7 heads tall, realistic proportions", "icon": "", "labelEn": "7 heads (realistic)"}, {"id": "pr_8", "zh": "8 頭身（模特兒比例）", "en": "8 heads tall, fashion model proportions", "icon": "", "labelEn": "8 heads (fashion model)"}], "custom": true}, {"key": "build", "label": "體型", "labelEn": "Build", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "b_slim", "zh": "瘦高", "en": "tall and slim", "icon": "", "labelEn": "Tall and slim"}, {"id": "b_petite", "zh": "嬌小", "en": "petite", "icon": "", "labelEn": "Petite"}, {"id": "b_avg", "zh": "普通體型", "en": "average build", "icon": "", "labelEn": "Average build"}, {"id": "b_sturdy", "zh": "壯碩", "en": "sturdy build", "icon": "", "labelEn": "Sturdy build"}], "custom": true}, {"key": "hairColor", "label": "髮色", "labelEn": "Hair color", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "hc_black", "zh": "黑色", "en": "black", "icon": "", "labelEn": "Black", "color": "#2B2B2B"}, {"id": "hc_brown", "zh": "咖啡色", "en": "brown", "icon": "", "labelEn": "Brown", "color": "#6B4423"}, {"id": "hc_blonde", "zh": "金色", "en": "blonde", "icon": "", "labelEn": "Blonde", "color": "#E8C85A"}, {"id": "hc_silver", "zh": "銀白色", "en": "silver-white", "icon": "", "labelEn": "Silver-white", "color": "#D9DCE3"}, {"id": "hc_red", "zh": "紅色", "en": "red", "icon": "", "labelEn": "Red", "color": "#C0392B"}, {"id": "hc_pink", "zh": "粉紅色", "en": "pink", "icon": "", "labelEn": "Pink", "color": "#F28DB2"}, {"id": "hc_blue", "zh": "藍色", "en": "blue", "icon": "", "labelEn": "Blue", "color": "#3B6FD9"}, {"id": "hc_purple", "zh": "紫色", "en": "purple", "icon": "", "labelEn": "Purple", "color": "#8E5BC9"}], "custom": true}, {"key": "hairLength", "label": "髮長", "labelEn": "Hair length", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "hl_long", "zh": "長髮", "en": "long", "icon": "", "labelEn": "Long"}, {"id": "hl_short", "zh": "短髮", "en": "short", "icon": "", "labelEn": "Short"}], "custom": true}, {"key": "hairStyle", "label": "髮型", "labelEn": "Hair style", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "hs_straight", "zh": "直髮", "en": "straight hair", "icon": "", "labelEn": "Straight hair"}, {"id": "hs_curly", "zh": "捲髮", "en": "curly hair", "icon": "", "labelEn": "Curly hair"}, {"id": "hs_twin", "zh": "雙馬尾", "en": "twin tails", "icon": "", "labelEn": "Twin tails"}, {"id": "hs_pony", "zh": "單馬尾", "en": "a ponytail", "icon": "", "labelEn": "Ponytail"}, {"id": "hs_side", "zh": "側馬尾", "en": "a side ponytail", "icon": "", "labelEn": "Side ponytail"}], "custom": true}, {"key": "eyes", "label": "眼睛顏色", "labelEn": "Eye color", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "e_brown", "zh": "咖啡色眼睛", "en": "brown eyes", "icon": "", "labelEn": "Brown eyes", "color": "#7B4A2B"}, {"id": "e_black", "zh": "黑色眼睛", "en": "dark eyes", "icon": "", "labelEn": "Dark eyes", "color": "#2B2B2B"}, {"id": "e_blue", "zh": "藍色眼睛", "en": "blue eyes", "icon": "", "labelEn": "Blue eyes", "color": "#3B82F6"}, {"id": "e_green", "zh": "綠色眼睛", "en": "green eyes", "icon": "", "labelEn": "Green eyes", "color": "#3FA34D"}, {"id": "e_purple", "zh": "紫色眼睛", "en": "purple eyes", "icon": "", "labelEn": "Purple eyes", "color": "#8B5CF6"}, {"id": "e_gold", "zh": "金色眼睛", "en": "golden eyes", "icon": "", "labelEn": "Golden eyes", "color": "#E0A93B"}], "custom": true}, {"key": "outfit", "label": "服裝", "labelEn": "Outfit", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "out_uni", "zh": "穿學生制服", "en": "wearing a school uniform", "icon": "", "labelEn": "School uniform"}, {"id": "out_hood", "zh": "穿連帽衛衣", "en": "wearing a hoodie", "icon": "", "labelEn": "Hoodie"}, {"id": "out_rain", "zh": "穿黃色雨衣", "en": "wearing a yellow raincoat", "icon": "", "labelEn": "Yellow raincoat"}, {"id": "out_kimono", "zh": "穿和服", "en": "wearing a kimono", "icon": "", "labelEn": "Kimono"}, {"id": "out_suit", "zh": "穿西裝", "en": "wearing a suit", "icon": "", "labelEn": "Suit"}, {"id": "out_adv", "zh": "穿冒險者裝備", "en": "wearing adventurer gear", "icon": "", "labelEn": "Adventurer gear"}, {"id": "out_apron", "zh": "穿咖啡店圍裙", "en": "wearing a cafe apron", "icon": "", "labelEn": "Cafe apron"}, {"id": "out_robe", "zh": "穿魔法師長袍", "en": "wearing a wizard robe", "icon": "", "labelEn": "Wizard robe"}], "custom": true}, {"key": "accessory", "label": "配件（最多選 2 個）", "labelEn": "Accessories (up to 2)", "mode": "multi", "max": 2, "view": "chip", "opts": [{"id": "acc_glasses", "zh": "圓框眼鏡", "en": "round glasses", "icon": "", "labelEn": "Round glasses"}, {"id": "acc_head", "zh": "耳機", "en": "headphones", "icon": "", "labelEn": "Headphones"}, {"id": "acc_bag", "zh": "背包", "en": "a backpack", "icon": "", "labelEn": "Backpack"}, {"id": "acc_scarf", "zh": "圍巾", "en": "a scarf", "icon": "", "labelEn": "Scarf"}, {"id": "acc_ribbon", "zh": "蝴蝶結", "en": "a ribbon", "icon": "", "labelEn": "Ribbon"}, {"id": "acc_guitar", "zh": "吉他", "en": "carrying a guitar", "icon": "", "labelEn": "Guitar"}, {"id": "acc_umb", "zh": "雨傘", "en": "holding an umbrella", "icon": "", "labelEn": "Umbrella"}, {"id": "acc_hat", "zh": "帽子", "en": "wearing a hat", "icon": "", "labelEn": "Hat"}, {"id": "acc_cat", "zh": "身邊有一隻貓", "en": "with a cat beside them", "icon": "", "labelEn": "Cat nearby"}], "custom": true}, {"key": "mood", "label": "表情與動作（最多選 2 個）", "labelEn": "Expression & pose (up to 2)", "mode": "multi", "max": 2, "view": "chip", "opts": [{"id": "m_smile", "zh": "微笑", "en": "smiling", "icon": "", "labelEn": "Smiling"}, {"id": "m_surprise", "zh": "驚訝", "en": "looking surprised", "icon": "", "labelEn": "Surprised"}, {"id": "m_shy", "zh": "害羞", "en": "looking shy", "icon": "", "labelEn": "Shy"}, {"id": "m_serious", "zh": "認真", "en": "with a serious expression", "icon": "", "labelEn": "Serious"}, {"id": "m_sad", "zh": "難過", "en": "looking sad", "icon": "", "labelEn": "Sad"}, {"id": "m_stand", "zh": "站著", "en": "standing", "icon": "", "labelEn": "Standing"}, {"id": "m_walk", "zh": "走路", "en": "walking", "icon": "", "labelEn": "Walking"}, {"id": "m_sit", "zh": "坐著", "en": "sitting", "icon": "", "labelEn": "Sitting"}, {"id": "m_wave", "zh": "揮手", "en": "waving", "icon": "", "labelEn": "Waving"}, {"id": "m_book", "zh": "拿著書", "en": "holding a book", "icon": "", "labelEn": "Holding a book"}], "custom": true}], "num": 1}, {"key": "scene", "title": "場景", "titleEn": "Scene", "hint": "在哪裡？什麼天氣、時間？", "hintEn": "Where? What weather and time?", "text": {"key": "placeText", "label": "或自己寫一個地點（選填）", "labelEn": "Or write your own place (optional)", "placeholder": "例：山上的小木屋", "placeholderEn": "e.g. a cabin in the mountains"}, "groups": [{"key": "place", "label": "地點", "labelEn": "Place", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "p_book", "zh": "雨天的小書店", "en": "in a small bookstore on a rainy day", "icon": "", "labelEn": "Small bookstore on a rainy day"}, {"id": "p_class", "zh": "教室", "en": "in a classroom", "icon": "", "labelEn": "Classroom"}, {"id": "p_market", "zh": "熱鬧的夜市", "en": "at a lively night market", "icon": "", "labelEn": "Lively night market"}, {"id": "p_forest", "zh": "森林", "en": "in a forest", "icon": "", "labelEn": "Forest"}, {"id": "p_sea", "zh": "海邊", "en": "at the seaside", "icon": "", "labelEn": "Seaside"}, {"id": "p_cafe", "zh": "咖啡廳", "en": "in a cozy cafe", "icon": "", "labelEn": "Cozy cafe"}, {"id": "p_street", "zh": "城市街頭", "en": "on a city street", "icon": "", "labelEn": "City street"}, {"id": "p_stars", "zh": "星空下", "en": "under a starry sky", "icon": "", "labelEn": "Starry sky"}, {"id": "p_white", "zh": "純白背景（角色設定圖）", "en": "on a plain white background, character design sheet", "icon": "", "labelEn": "Plain white background (character sheet)"}], "custom": false}], "num": 2}, {"key": "camera", "title": "鏡頭", "titleEn": "Camera", "hint": "距離多遠？從哪個角度看？", "hintEn": "How far away? From which angle?", "text": null, "groups": [{"key": "distance", "label": "距離", "labelEn": "Distance", "mode": "single", "max": 1, "view": "tile", "opts": [{"id": "d_long", "zh": "遠景", "en": "long shot", "icon": "landscape", "labelEn": "Long shot"}, {"id": "d_full", "zh": "全身", "en": "full shot", "icon": "accessibility_new", "labelEn": "Full shot"}, {"id": "d_mid", "zh": "半身", "en": "medium shot", "icon": "person", "labelEn": "Medium shot"}, {"id": "d_close", "zh": "近拍", "en": "close-up", "icon": "face", "labelEn": "Close-up"}, {"id": "d_extreme", "zh": "特寫", "en": "extreme close-up", "icon": "visibility", "labelEn": "Extreme close-up"}], "tabs": ["both"], "custom": true}, {"key": "sceneDistance", "label": "距離", "labelEn": "Distance", "mode": "single", "max": 1, "view": "tile", "opts": [{"id": "sd_ext", "zh": "極遠景", "en": "extreme long shot, vast view", "icon": "landscape", "labelEn": "Extreme wide shot"}, {"id": "sd_estab", "zh": "全景", "en": "establishing shot of the whole place", "icon": "panorama", "labelEn": "Establishing shot"}, {"id": "sd_mid", "zh": "中景", "en": "medium shot of one area", "icon": "crop_landscape", "labelEn": "Medium shot"}, {"id": "sd_object", "zh": "物件特寫", "en": "extreme close-up of a single object", "icon": "search", "labelEn": "Object close-up"}], "tabs": ["scene"], "custom": true}, {"key": "angle", "label": "角度", "labelEn": "Angle", "mode": "single", "max": 1, "view": "tile", "opts": [{"id": "a_eye", "zh": "平視", "en": "eye-level angle", "icon": "arrow_forward", "labelEn": "Eye-level angle"}, {"id": "a_high", "zh": "俯角", "en": "high angle shot, from above", "icon": "arrow_downward", "labelEn": "High angle (from above)"}, {"id": "a_low", "zh": "仰角", "en": "low angle shot, from below", "icon": "arrow_upward", "labelEn": "Low angle (from below)"}, {"id": "a_pov", "zh": "第一人稱", "en": "point-of-view shot", "icon": "videocam", "labelEn": "Point of view"}, {"id": "a_dutch", "zh": "斜角構圖", "en": "Dutch angle", "icon": "rotate_right", "labelEn": "Dutch angle (tilted)"}, {"id": "a_back", "zh": "背影", "en": "from behind", "icon": "directions_walk", "labelEn": "From behind"}], "custom": true}], "num": 3}, {"key": "light", "title": "光影", "titleEn": "Lighting", "hint": "什麼樣的光？（最多選 2 個）", "hintEn": "What kind of light? (choose up to 2)", "text": null, "groups": [{"key": "light", "label": "光影", "labelEn": "Lighting (up to 2)", "mode": "multi", "max": 2, "view": "tile", "opts": [{"id": "l_soft", "zh": "柔光", "en": "soft lighting", "icon": "cloud", "labelEn": "Soft lighting"}, {"id": "l_back", "zh": "逆光", "en": "backlighting", "icon": "contrast", "labelEn": "Backlighting"}, {"id": "l_cine", "zh": "電影燈光", "en": "cinematic lighting", "icon": "movie", "labelEn": "Cinematic lighting"}, {"id": "l_rays", "zh": "耶穌光", "en": "god rays", "icon": "flare", "labelEn": "God rays"}, {"id": "l_hard", "zh": "艷陽強陰影", "en": "hard shadows", "icon": "wb_sunny", "labelEn": "Hard shadows"}, {"id": "l_studio", "zh": "攝影棚光", "en": "studio lighting", "icon": "lightbulb", "labelEn": "Studio lighting"}, {"id": "l_neon", "zh": "霓虹光", "en": "neon glow", "icon": "nightlife", "labelEn": "Neon glow"}, {"id": "l_window", "zh": "窗外射入的光", "en": "volumetric light through the window", "icon": "window", "labelEn": "Light through the window"}, {"id": "l_golden", "zh": "夕陽金色光", "en": "golden hour light", "icon": "wb_twilight", "labelEn": "Golden hour"}, {"id": "l_night", "zh": "夜晚微光", "en": "faint glowing light in the dark", "icon": "dark_mode", "labelEn": "Faint glow in the dark"}], "custom": true}], "num": 4}, {"key": "style", "title": "風格", "titleEn": "Style", "hint": "先決定畫風，後面的選擇會比較好想。什麼畫法、色調？不要填畫家名字喔", "hintEn": "Decide the art style first, the rest gets easier. What technique and colors? Don't use artist names", "text": null, "groups": [{"key": "style", "label": "畫法", "labelEn": "Art style", "mode": "single", "max": 1, "view": "tile", "opts": [{"id": "s_flat", "zh": "扁平插畫", "en": "flat illustration", "icon": "crop_square", "labelEn": "Flat illustration"}, {"id": "s_water", "zh": "水彩", "en": "watercolor painting", "icon": "water_drop", "labelEn": "Watercolor"}, {"id": "s_anime", "zh": "日系動畫", "en": "Japanese anime style", "icon": "auto_awesome", "labelEn": "Anime"}, {"id": "s_paint", "zh": "厚塗插畫", "en": "digital painting with rich brush strokes", "icon": "brush", "labelEn": "Digital painting"}, {"id": "s_pencil", "zh": "鉛筆線稿", "en": "pencil line drawing", "icon": "edit", "labelEn": "Pencil drawing"}, {"id": "s_pixel", "zh": "像素風", "en": "pixel art", "icon": "grid_view", "labelEn": "Pixel art"}, {"id": "s_chibi", "zh": "Q 版", "en": "chibi style", "icon": "sentiment_satisfied", "tabs": ["person", "both"], "labelEn": "Chibi"}, {"id": "s_photo", "zh": "寫實攝影", "en": "realistic photo", "icon": "photo_camera", "labelEn": "Realistic photo"}, {"id": "s_pastel", "zh": "柔和粉彩", "en": "soft pastel colors", "icon": "palette", "labelEn": "Soft pastel"}, {"id": "s_manga", "zh": "黑白漫畫", "en": "black and white manga with screentones", "icon": "menu_book", "labelEn": "Black & white manga"}], "custom": true}, {"key": "ratio", "label": "畫面比例", "labelEn": "Aspect ratio", "mode": "single", "max": 1, "view": "chip", "opts": [{"id": "r_11", "zh": "1:1 正方形", "en": "1:1 square", "icon": "", "labelEn": "Square 1:1"}, {"id": "r_169", "zh": "16:9 橫式", "en": "16:9 landscape", "icon": "", "labelEn": "Landscape 16:9"}, {"id": "r_916", "zh": "9:16 直式", "en": "9:16 portrait", "icon": "", "labelEn": "Portrait 9:16"}, {"id": "r_43", "zh": "4:3", "en": "4:3", "icon": "", "labelEn": "4:3"}, {"id": "r_34", "zh": "3:4", "en": "3:4", "icon": "", "labelEn": "3:4"}], "custom": false}], "num": 5}, {"key": "avoid", "title": "不要什麼", "titleEn": "Avoid", "hint": "想避開的東西（可多選）", "hintEn": "Things to keep out of the picture (choose any)", "text": {"key": "avoidText", "label": "其他不要的東西（選填）", "labelEn": "Anything else to avoid? (optional)", "placeholder": "例：不要下雨", "placeholderEn": "e.g. no rain"}, "groups": [{"key": "avoid", "label": "不要出現", "labelEn": "Keep out of the picture", "mode": "multi", "max": 8, "view": "chip", "opts": [{"id": "v_text", "zh": "文字", "en": "text", "icon": "", "labelEn": "Text"}, {"id": "v_wm", "zh": "浮水印", "en": "watermark", "icon": "", "labelEn": "Watermark"}, {"id": "v_sign", "zh": "簽名", "en": "signature", "icon": "", "labelEn": "Signature"}, {"id": "v_blur", "zh": "模糊", "en": "blur", "icon": "", "labelEn": "Blur"}, {"id": "v_lowres", "zh": "低解析度", "en": "low resolution", "icon": "", "labelEn": "Low resolution"}, {"id": "v_fingers", "zh": "多餘的手指", "en": "extra fingers", "icon": "", "labelEn": "Extra fingers"}, {"id": "v_hands", "zh": "變形的手", "en": "deformed hands", "icon": "", "labelEn": "Deformed hands"}, {"id": "v_limbs", "zh": "多餘的肢體", "en": "extra limbs", "icon": "", "labelEn": "Extra limbs"}], "custom": false}], "num": 6}], "defaults": {"avoid": ["v_text", "v_wm"]}, "ui": {"zh": {"pageTitle": "提示詞填空小工具", "h1": "提示詞填空小工具", "intro": "一格一格點選，組出貼給 Gemini 或 ChatGPT 生圖的提示詞。", "tabPerson": "單純人物", "tabScene": "場景", "tabBoth": "人物＋場景", "outTitle": "你的提示詞", "langZh": "中文", "langEn": "English", "prefixLabel": "開頭加上「請幫我生成一張圖片」（建議開著）", "outPlaceholder": "在左邊點選卡片，提示詞就會出現在這裡。", "btnCopy": "複製提示詞", "btnGemini": "複製並開啟 Gemini", "btnGpt": "複製並開啟 ChatGPT", "btnRandom": "隨機幫我填", "tip": "風格請用「畫法」描述，不要填畫家的名字。", "missPrefix": "還沒選：", "missSuffix": "（沒選也可以，AI 會自己決定）", "missNames": ["人物類型", "場景", "鏡頭距離", "鏡頭角度", "光影", "風格"], "copyOk": "已複製！到 AI 的對話框貼上就可以了。", "copyEmpty": "還沒有內容可以複製，先在左邊點選幾個選項吧。", "copyFail": "複製失敗，請手動選取上面的文字複製。", "headZh": "請幫我生成一張圖片。", "headEn": "Please generate an image.", "labZh": ["主體", "場景", "鏡頭", "光影", "風格", "畫面比例", "不要出現"], "labEn": ["Subject", "Setting", "Camera", "Lighting", "Style", "Aspect ratio", "Avoid"], "hairWord": "頭髮", "customPh": "自己設定（選填）", "transNote": "英文版裡你自己寫的字會維持中文（Gemini、ChatGPT 看得懂）。用電腦版 Chrome 可以自動翻成英文。", "modalTitle": "提示詞複製好了！等 AI 生圖的時候，來回答幾個小問題吧", "modalIntro": "先到 Gemini 或 ChatGPT 貼上提示詞、按下生圖。等圖片出來的空檔，可以先回答下面第一部分。", "fbPart1": "現在就可以回答", "fbPart2": "圖片出來後再回答（可以先關掉，之後按右下角的按鈕回來）", "qWait": "想一想：看到圖之後，你最想改哪一格？", "qWaitOpts": ["風格", "人物", "場景", "鏡頭", "光影", "不要什麼", "都滿意"], "btnLater": "先收起來，等圖出來再回來", "btnReopen": "回答小問卷", "fbNote": "不用寫名字，不想填也沒關係。", "q1": "① 這個提示詞工具對你有幫助嗎？", "q1Opts": ["完全沒有", "不太有", "普通", "有幫助", "非常有"], "q2": "② 生出來的圖，有達到你想要的效果嗎？", "q2Opts": ["完美達到", "大致達到", "有一點落差", "沒有達到", "還沒去生圖"], "q3": "③ 你用哪個 AI 生圖？", "q3Opts": ["Gemini", "ChatGPT", "其他"], "q4": "④ 哪裡好用？哪裡需要改進？（選填）", "q4Ph": "例如：鏡頭選項很清楚，但我想要更多服裝選擇", "consent": "我同意把剛剛組出的提示詞一起送給老師（選填，方便老師看哪裡可以改進）", "submit": "送出感想", "fbNeedQ1": "請先回答第 ① 題（有沒有幫助）。", "fbNoForm": "老師還沒有設定回收表單，這次感想沒有送出。（設定方法請看 README.md）", "fbOk": "已送出，謝謝你的感想！", "fbErr": "送出失敗，請檢查網路後再試一次。", "footer": "這個工具不會蒐集你的姓名或帳號。你選的內容只存在你自己的瀏覽器裡；只有你按「送出感想」才會把感想送出。"}, "en": {"pageTitle": "Prompt Builder", "h1": "Prompt Builder", "intro": "Click through the cards to build a prompt you can paste into Gemini or ChatGPT.", "tabPerson": "Character only", "tabScene": "Scene", "tabBoth": "Character + Scene", "outTitle": "Your prompt", "langZh": "中文", "langEn": "English", "prefixLabel": "Start with \"Please generate an image\" (recommended)", "outPlaceholder": "Click the cards on the left and your prompt will appear here.", "btnCopy": "Copy prompt", "btnGemini": "Copy & open Gemini", "btnGpt": "Copy & open ChatGPT", "btnRandom": "Surprise me", "tip": "Describe the style by technique (for example watercolor). Don't use an artist's name.", "missPrefix": "Not chosen yet:", "missSuffix": "(optional, the AI will decide)", "missNames": ["Character type", "Scene", "Shot distance", "Camera angle", "Lighting", "Style"], "copyOk": "Copied! Paste it into your AI chat.", "copyEmpty": "Nothing to copy yet. Click a few options on the left first.", "copyFail": "Copy failed. Please select the text above and copy it yourself.", "headZh": "請幫我生成一張圖片。", "headEn": "Please generate an image.", "labZh": ["主體", "場景", "鏡頭", "光影", "風格", "畫面比例", "不要出現"], "labEn": ["Subject", "Setting", "Camera", "Lighting", "Style", "Aspect ratio", "Avoid"], "hairWord": "hair", "customPh": "Your own idea (optional)", "transNote": "Text you wrote yourself stays in its original language in the English prompt (Gemini and ChatGPT can read Chinese). Desktop Chrome can translate it to English automatically.", "modalTitle": "Prompt copied! While the AI draws, answer a few quick questions", "modalIntro": "Paste the prompt into Gemini or ChatGPT and start generating. While you wait for the picture, you can answer Part 1 below.", "fbPart1": "Part 1: answer now", "fbPart2": "Part 2: answer when the picture is ready (you can close this and come back with the button at the bottom right)", "qWait": "Think: after you see the picture, which card would you change first?", "qWaitOpts": ["Style", "Character", "Scene", "Camera", "Lighting", "Avoid", "Happy with all"], "btnLater": "Close for now, come back when the picture is ready", "btnReopen": "Answer the survey", "fbNote": "No name needed. It is fine to skip any question.", "q1": "① Did this tool help you?", "q1Opts": ["Not at all", "A little", "So-so", "Helpful", "Very helpful"], "q2": "② Did the picture turn out the way you wanted?", "q2Opts": ["Perfect", "Mostly", "A bit different", "Not at all", "Haven't generated yet"], "q3": "③ Which AI did you use?", "q3Opts": ["Gemini", "ChatGPT", "Other"], "q4": "④ What worked well? What should be improved? (optional)", "q4Ph": "e.g. The camera options were clear, but I want more outfit choices", "consent": "I agree to send the prompt I just made to the teacher (optional, helps improve the tool)", "submit": "Send", "fbNeedQ1": "Please answer question ① first (was it helpful?).", "fbNoForm": "The survey is not set up yet, so nothing was sent. (See README.md)", "fbOk": "Sent. Thank you!", "fbErr": "Could not send. Please check your connection and try again.", "footer": "This tool does not collect your name or account. Your choices are only stored in your own browser, and nothing is sent unless you press Send."}}};
+const ZH = DATA.ui.zh;   /* 提示詞本身的固定文字、問卷送出的值，一律用中文那一份 */
+const STORE = 'prompt-tool-person-v1';
+
+const GROUPS = {};
+DATA.cards.forEach(c => c.groups.forEach(g => { GROUPS[g.key] = g; }));
+
+/* 三個分頁各自顯示哪幾張卡片；選的內容三個分頁共用 */
+const TAB_CARDS = {
+  person: ['style', 'subject'],
+  scene: ['style', 'scene', 'camera', 'light', 'avoid'],
+  both: ['style', 'subject', 'scene', 'camera', 'light', 'avoid']
+};
+function visibleCards() { return TAB_CARDS[state.tab].map(k => DATA.cards.find(c => c.key === k)).filter(Boolean); }
+function groupVisible(g) { return !g.tabs || g.tabs.indexOf(state.tab) >= 0; }
+function optVisible(o) { return !o.tabs || o.tabs.indexOf(state.tab) >= 0; }
+function visibleGroupKeys() {
+  const keys = [];
+  visibleCards().forEach(c => c.groups.forEach(g => { if (groupVisible(g)) keys.push(g.key); }));
+  return keys;
+}
+
+/* Material Symbols 載入成功才顯示圖示 */
+if (document.fonts && document.fonts.load) {
+  document.fonts.load('24px "Material Symbols Outlined"', 'palette').then(function (f) {
+    if (f && f.length) document.documentElement.classList.add('mi-ready');
+  }).catch(function () {});
+}
+
+/* ---------- 狀態 ---------- */
+function defaultUi() {
+  const l = (navigator.language || 'zh').toLowerCase();
+  return l.indexOf('zh') === 0 ? 'zh' : 'en';
+}
+function defaults() {
+  const sel = {};
+  Object.keys(GROUPS).forEach(k => { sel[k] = (DATA.defaults[k] || []).slice(); });
+  const ui = defaultUi();
+  return { sel: sel, text: {}, gtext: {}, lang: ui === 'en' ? 'en' : 'zh', ui: ui, prefix: true, tab: 'person' };
+}
+function loadState() {
+  const d = defaults();
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE) || 'null');
+    if (s && s.sel) {
+      Object.keys(d.sel).forEach(k => { if (Array.isArray(s.sel[k])) d.sel[k] = s.sel[k].filter(id => GROUPS[k].opts.some(o => o.id === id)); });
+      d.text = s.text || {};
+      d.gtext = s.gtext || {};
+      d.lang = s.lang === 'en' ? 'en' : 'zh';
+      d.ui = s.ui === 'zh' || s.ui === 'en' ? s.ui : d.ui;
+      d.prefix = s.prefix !== false;
+      d.tab = TAB_CARDS[s.tab] ? s.tab : 'person';
+    }
+  } catch (e) { /* 瀏覽器不給存也沒關係 */ }
+  return d;
+}
+let state = loadState();
+let UI = DATA.ui[state.ui];
+function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+function isEn() { return state.ui === 'en'; }
+function L(zh, en) { return isEn() && en ? en : zh; }
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+function picked(key) {
+  return state.sel[key].map(id => GROUPS[key].opts.find(o => o.id === id)).filter(Boolean).filter(optVisible);
+}
+
+function applyUi() {
+  UI = DATA.ui[state.ui];
+  document.documentElement.lang = isEn() ? 'en' : 'zh-Hant';
+  document.title = UI.pageTitle;
+  document.querySelectorAll('[data-ui]').forEach(n => { n.textContent = UI[n.dataset.ui]; });
+  document.querySelectorAll('[data-ui-ph]').forEach(n => { n.placeholder = UI[n.dataset.uiPh]; });
+  document.getElementById('out').placeholder = UI.outPlaceholder;
+  document.getElementById('uiZh').setAttribute('aria-pressed', isEn() ? 'false' : 'true');
+  document.getElementById('uiEn').setAttribute('aria-pressed', isEn() ? 'true' : 'false');
+}
+
+/* ---------- 畫面 ---------- */
+function inkFor(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return '#fff';
+  const n = parseInt(m[1], 16);
+  const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  return lum > 0.62 ? '#3F2D25' : '#FFFFFF';
+}
+function makeOption(g, opt) {
+  const label = isEn() ? (opt.labelEn || opt.en) : opt.zh;
+  const b = el('button', g.view === 'tile' ? 'tile' : 'chip');
+  b.type = 'button';
+  b.dataset.group = g.key;
+  b.dataset.id = opt.id;
+  b.setAttribute('aria-pressed', 'false');
+  if (g.view === 'tile') {
+    const th = el('span', 'thumb');
+    if (opt.icon) th.appendChild(el('span', 'mi', opt.icon));
+    const img = new Image();
+    img.alt = '';
+    img.onload = function () { th.insertBefore(img, th.firstChild); th.classList.add('has-img'); };
+    img.src = 'img/' + opt.id + '.jpg';
+    b.appendChild(th);
+    b.appendChild(el('span', 'lbl', label));
+    b.appendChild(el('span', 'sub', isEn() ? opt.zh : opt.en));
+  } else {
+    b.textContent = label;
+    if (opt.color) {
+      b.classList.add('color');
+      b.style.background = opt.color;
+      b.style.color = inkFor(opt.color);
+      b.style.borderColor = opt.color;
+    }
+  }
+  b.addEventListener('click', function () { toggle(g, opt.id); });
+  return b;
+}
+
+function textInput(cls, getVal, setVal, placeholder, label) {
+  const inp = el('input', cls);
+  inp.type = 'text';
+  inp.maxLength = 80;
+  inp.placeholder = placeholder;
+  if (label) inp.setAttribute('aria-label', label);
+  inp.value = getVal() || '';
+  inp.addEventListener('input', function () { setVal(inp.value); save(); updatePreview(); queueTranslate(); });
+  return inp;
+}
+
+function buildCards() {
+  const root = document.getElementById('cards');
+  root.innerHTML = '';
+  visibleCards().forEach((card, idx) => {
+    const sec = el('section', 'card');
+    const h = el('h2');
+    h.appendChild(el('span', 'num', String(idx + 1)));
+    h.appendChild(document.createTextNode(L(card.title, card.titleEn)));
+    sec.appendChild(h);
+    sec.appendChild(el('p', 'hint', L(card.hint, card.hintEn)));
+    card.groups.filter(groupVisible).forEach(g => {
+      const fs = el('fieldset');
+      const legend = L(g.label, g.labelEn);
+      fs.appendChild(el('legend', null, legend));
+      const wrap = el('div', g.view === 'tile' ? 'tiles' : 'opts');
+      g.opts.filter(optVisible).forEach(opt => wrap.appendChild(makeOption(g, opt)));
+      fs.appendChild(wrap);
+      if (g.custom) {
+        fs.appendChild(textInput('gcustom', () => state.gtext[g.key], v => { state.gtext[g.key] = v; }, UI.customPh, legend + ': ' + UI.customPh));
+      }
+      sec.appendChild(fs);
+    });
+    if (card.text) {
+      const lab = el('label', 'field');
+      lab.appendChild(el('span', null, L(card.text.label, card.text.labelEn)));
+      lab.appendChild(textInput(null, () => state.text[card.text.key], v => { state.text[card.text.key] = v; }, L(card.text.placeholder, card.text.placeholderEn)));
+      sec.appendChild(lab);
+    }
+    root.appendChild(sec);
+  });
+}
+
+function toggle(g, id) {
+  const cur = state.sel[g.key];
+  const i = cur.indexOf(id);
+  if (g.mode === 'single') {
+    state.sel[g.key] = i >= 0 ? [] : [id];
+  } else if (i >= 0) {
+    cur.splice(i, 1);
+  } else {
+    if (cur.length >= (g.max || 99)) cur.shift();
+    cur.push(id);
+  }
+  save();
+  refresh();
+}
+
+function refresh() {
+  document.querySelectorAll('[data-group]').forEach(b => {
+    const on = state.sel[b.dataset.group].indexOf(b.dataset.id) >= 0;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.classList.toggle('on', on);
+  });
+  updatePreview();
+}
+
+/* ---------- 自己寫的文字：英文版用瀏覽器內建翻譯（沒有就維持原文） ---------- */
+const trans = {};
+let translator = null;
+let translatorGaveUp = false;
+const CJK = /[㐀-鿿]/;
+
+function customStrings() {
+  const out = [];
+  const vis = visibleGroupKeys();
+  vis.forEach(k => { const v = (state.gtext[k] || '').trim(); if (v) out.push(v); });
+  visibleCards().forEach(c => { if (c.text) { const v = (state.text[c.text.key] || '').trim(); if (v) out.push(v); } });
+  return out.filter(v => CJK.test(v));
+}
+function withTimeout(p, ms) {
+  return Promise.race([p, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+}
+async function ensureTranslator() {
+  if (translator || translatorGaveUp) return translator;
+  if (!('Translator' in self)) { translatorGaveUp = true; return null; }
+  for (const src of ['zh-Hant', 'zh']) {
+    try {
+      const opts = { sourceLanguage: src, targetLanguage: 'en' };
+      const a = await withTimeout(Translator.availability(opts), 5000);
+      if (a === 'unavailable') continue;
+      translator = await withTimeout(Translator.create(opts), 90000);
+      return translator;
+    } catch (e) { /* 下載模型需要點擊動作，或太久沒回應，下次再試 */ }
+  }
+  return null;
+}
+async function translatePending() {
+  if (state.lang !== 'en') return;
+  const todo = customStrings().filter(v => !(v in trans));
+  if (todo.length) {
+    const tl = await ensureTranslator();
+    if (tl) {
+      for (const v of todo) {
+        try { trans[v] = await tl.translate(v); } catch (e) { /* 這句翻不了就維持原文 */ }
+      }
+    }
+  }
+  updatePreview();
+}
+let translateTimer = null;
+function queueTranslate() {
+  if (state.lang !== 'en') return;
+  clearTimeout(translateTimer);
+  translateTimer = setTimeout(translatePending, 600);
+}
+function tr(raw, lang) { return lang === 'en' && trans[raw] ? trans[raw] : raw; }
+
+/* ---------- 組提示詞（提示詞的語言和介面語言各自獨立） ---------- */
+function words(keys, lang) {
+  const out = [];
+  const vis = visibleGroupKeys();
+  keys.filter(k => vis.indexOf(k) >= 0).forEach(k => {
+    picked(k).forEach(o => out.push(lang === 'zh' ? o.zh : o.en));
+    const own = (state.gtext[k] || '').trim();
+    if (own) out.push(tr(own, lang));
+  });
+  return out;
+}
+/* 髮色、髮長、髮型組成一句：黑色長髮，直髮 / long black hair, straight hair */
+function hairPhrases(lang) {
+  const c = picked('hairColor')[0];
+  const l = picked('hairLength')[0];
+  const st = picked('hairStyle')[0];
+  const out = [];
+  const cw = c ? (lang === 'zh' ? c.zh : c.en) : '';
+  const lw = l ? (lang === 'zh' ? l.zh : l.en) : '';
+  if (lang === 'zh') {
+    if (cw && lw) out.push(cw + lw);
+    else if (cw) out.push(cw + DATA.ui.zh.hairWord);
+    else if (lw) out.push(lw);
+  } else {
+    const adj = [lw, cw].filter(Boolean).join(' ');
+    if (adj) out.push(adj + ' ' + DATA.ui.en.hairWord);
+  }
+  if (st) out.push(lang === 'zh' ? st.zh : st.en);
+  ['hairColor', 'hairLength', 'hairStyle'].forEach(k => { const v = (state.gtext[k] || '').trim(); if (v) out.push(tr(v, lang)); });
+  return out;
+}
+function compose() {
+  const lang = state.lang;
+  const lab = lang === 'zh' ? ZH.labZh : ZH.labEn;
+  const head = lang === 'zh' ? ZH.headZh : ZH.headEn;
+  const sep = lang === 'zh' ? '，' : ', ';
+  const csep = lang === 'zh' ? '、' : ', ';
+  const colon = lang === 'zh' ? '：' : ': ';
+  const lines = [];
+  function add(label, parts, s) {
+    const p = parts.filter(Boolean);
+    if (p.length) lines.push(label + colon + p.join(s));
+  }
+  const t = function (k) { return tr((state.text[k] || '').trim(), lang); };
+  const hasSubject = TAB_CARDS[state.tab].indexOf('subject') >= 0;
+  const hasScene = TAB_CARDS[state.tab].indexOf('scene') >= 0;
+  add(lab[4], words(['style'], lang), csep);
+  add(lab[5], words(['ratio'], lang), csep);
+  if (hasSubject) {
+    const subject = words(['type', 'proportion', 'build'], lang)
+      .concat(hairPhrases(lang))
+      .concat(words(['eyes', 'outfit', 'accessory', 'mood'], lang))
+      .concat([t('extra')]);
+    add(lab[0], subject, sep);
+  }
+  if (hasScene) {
+    add(lab[1], words(['place'], lang).concat([t('placeText')]), sep);
+    add(lab[2], words(['distance', 'sceneDistance', 'angle'], lang), csep);
+    add(lab[3], words(['light'], lang), csep);
+    add(lab[6], words(['avoid'], lang).concat([t('avoidText')]), csep);
+  }
+  if (!lines.length) return '';
+  return (state.prefix ? head + '\n' : '') + lines.join('\n');
+}
+
+const MISS_KEYS = [['type'], ['place'], ['distance', 'sceneDistance'], ['angle'], ['light'], ['style']];
+function updatePreview() {
+  const text = compose();
+  document.getElementById('out').value = text;
+  const vis = visibleGroupKeys();
+  const miss = [];
+  MISS_KEYS.forEach((keys, i) => {
+    const seen = keys.filter(k => vis.indexOf(k) >= 0);
+    if (seen.length && seen.every(k => !picked(k).length && !(state.gtext[k] || '').trim())) miss.push(UI.missNames[i]);
+  });
+  const box = document.getElementById('miss');
+  if (text && miss.length) {
+    const sp = isEn() ? ' ' : '';
+    box.hidden = false;
+    box.textContent = UI.missPrefix + sp + miss.join(isEn() ? ', ' : '、') + sp + UI.missSuffix;
+  } else {
+    box.hidden = true;
+  }
+  const note = document.getElementById('transNote');
+  note.hidden = !(state.lang === 'en' && customStrings().some(v => !trans[v]));
+  document.getElementById('langZh').setAttribute('aria-pressed', state.lang === 'zh' ? 'true' : 'false');
+  document.getElementById('langEn').setAttribute('aria-pressed', state.lang === 'en' ? 'true' : 'false');
+  document.getElementById('prefix').checked = state.prefix;
+}
+
+/* ---------- 複製 ---------- */
+function setCopyStatus(msg, ok) {
+  const s = document.getElementById('copyStatus');
+  s.textContent = msg;
+  s.className = 'status ' + (ok ? 'ok' : 'err');
+  clearTimeout(setCopyStatus.t);
+  setCopyStatus.t = setTimeout(function () { s.textContent = ''; }, 3500);
+}
+async function copyPrompt() {
+  const text = compose();
+  if (!text) { setCopyStatus(UI.copyEmpty, false); return false; }
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const out = document.getElementById('out');
+    out.focus();
+    out.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+    if (!ok) { setCopyStatus(UI.copyFail, false); return false; }
+  }
+  setCopyStatus(UI.copyOk, true);
+  maybeShowFeedback();
+  return true;
+}
+
+/* ---------- 隨機 ---------- */
+function randomFill() {
+  const vis = visibleGroupKeys();
+  ['type', 'proportion', 'build', 'hairColor', 'hairLength', 'hairStyle', 'eyes', 'outfit', 'accessory', 'mood', 'place', 'distance', 'sceneDistance', 'angle', 'light', 'style', 'ratio'].filter(k => vis.indexOf(k) >= 0).forEach(k => {
+    const opts = GROUPS[k].opts.filter(optVisible);
+    if (!opts.length) return;
+    state.sel[k] = [opts[Math.floor(Math.random() * opts.length)].id];
+  });
+  /* 馬尾、雙馬尾要有一定長度，隨機時避免「短髮＋馬尾」 */
+  if (['hs_twin', 'hs_pony', 'hs_side'].indexOf((state.sel.hairStyle || [])[0]) >= 0 && (state.sel.hairLength || []).length) state.sel.hairLength = ['hl_long'];
+  save();
+  refresh();
+}
+
+/* ---------- 複製後跳出的小問卷（送出的值一律用中文，方便統計） ---------- */
+const fb = { change: '', helpful: '', worked: '', ai: '' };
+let fbShown = false;
+function getSession(k) { try { return sessionStorage.getItem(k) === '1'; } catch (e) { return false; } }
+function setSession(k) { try { sessionStorage.setItem(k, '1'); } catch (e) {} }
+let fbDone = getSession('pt-fb-done');
+
+function buildChoices(id, key, labels, values, withNumber) {
+  const wrap = document.getElementById(id);
+  wrap.innerHTML = '';
+  labels.forEach(function (label, i) {
+    const b = el('button');
+    b.type = 'button';
+    const value = withNumber ? String(i + 1) : (values[i] || label);
+    b.setAttribute('aria-pressed', fb[key] === value ? 'true' : 'false');
+    if (withNumber) {
+      b.appendChild(document.createTextNode(String(i + 1)));
+      b.appendChild(el('small', null, label));
+    } else {
+      b.textContent = label;
+    }
+    b.addEventListener('click', function () {
+      const same = fb[key] === value;
+      fb[key] = same ? '' : value;
+      wrap.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', !same && x === b ? 'true' : 'false'));
+    });
+    wrap.appendChild(b);
+  });
+}
+function buildAllChoices() {
+  buildChoices('qChange', 'change', UI.qWaitOpts, ZH.qWaitOpts, false);
+  buildChoices('qHelpful', 'helpful', UI.q1Opts, ZH.q1Opts, true);
+  buildChoices('qWorked', 'worked', UI.q2Opts, ZH.q2Opts, false);
+  buildChoices('qAi', 'ai', UI.q3Opts, ZH.q3Opts, false);
+}
+function fbMsg(msg, ok) {
+  const s = document.getElementById('fbStatus');
+  s.textContent = msg;
+  s.className = 'status ' + (ok ? 'ok' : 'err');
+}
+function openDialog() {
+  const d = document.getElementById('fbDialog');
+  document.getElementById('fbFab').hidden = true;
+  if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+}
+function closeDialog() {
+  const d = document.getElementById('fbDialog');
+  if (d.close) d.close(); else d.removeAttribute('open');
+}
+function maybeShowFeedback() {
+  if (fbDone || fbShown) return;
+  fbShown = true;
+  openDialog();
+}
+async function submitFeedback(ev) {
+  ev.preventDefault();
+  if (!fb.helpful) { fbMsg(UI.fbNeedQ1, false); return; }
+  if (!CONFIG.ENDPOINT) { fbMsg(UI.fbNoForm, false); return; }
+  const payload = Object.assign({}, CONFIG.EXTRA, {
+    tool: 'prompt-tool',
+    tab: state.tab,
+    lang: state.lang,
+    ui: state.ui,
+    helpful: fb.helpful,
+    worked: fb.worked,
+    ai: fb.ai,
+    change: fb.change,
+    comment: document.getElementById('qComment').value.trim()
+  });
+  if (document.getElementById('qSendPrompt').checked) payload.prompt = compose();
+  const btn = document.getElementById('fbSubmit');
+  btn.disabled = true;
+  try {
+    const res = await fetch(CONFIG.ENDPOINT, {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json', 'Accept': 'application/json' }, CONFIG.HEADERS),
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    fbDone = true;
+    setSession('pt-fb-done');
+    fbMsg(UI.fbOk, true);
+    setTimeout(closeDialog, 1500);
+  } catch (e) {
+    fbMsg(UI.fbErr, false);
+    btn.disabled = false;
+  }
+}
+
+/* ---------- 分頁、介面語言 ---------- */
+function updateTabs() {
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === state.tab ? 'true' : 'false'));
+}
+function setTab(t) {
+  state.tab = t;
+  save();
+  buildCards();
+  updateTabs();
+  refresh();
+  queueTranslate();
+}
+function setUi(l) {
+  if (state.ui === l) return;
+  state.ui = l;
+  state.lang = l === 'en' ? 'en' : 'zh';   /* 換介面語言時，提示詞語言跟著換（之後還是可以再改） */
+  save();
+  applyUi();
+  buildCards();
+  buildAllChoices();
+  refresh();
+  translatePending();
+}
+
+/* ---------- 啟動 ---------- */
+applyUi();
+buildCards();
+buildAllChoices();
+updateTabs();
+refresh();
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', function () { setTab(b.dataset.tab); }));
+document.getElementById('uiZh').addEventListener('click', function () { setUi('zh'); });
+document.getElementById('uiEn').addEventListener('click', function () { setUi('en'); });
+document.getElementById('langZh').addEventListener('click', function () { state.lang = 'zh'; save(); updatePreview(); });
+document.getElementById('langEn').addEventListener('click', function () { state.lang = 'en'; save(); updatePreview(); translatePending(); });
+document.getElementById('prefix').addEventListener('change', function (e) { state.prefix = e.target.checked; save(); updatePreview(); });
+document.getElementById('copy').addEventListener('click', copyPrompt);
+document.getElementById('copyM').addEventListener('click', copyPrompt);
+document.getElementById('openGemini').addEventListener('click', copyPrompt);
+document.getElementById('openGpt').addEventListener('click', copyPrompt);
+document.getElementById('random').addEventListener('click', randomFill);
+document.getElementById('randomM').addEventListener('click', randomFill);
+document.getElementById('fbForm').addEventListener('submit', submitFeedback);
+document.getElementById('fbLater').addEventListener('click', closeDialog);
+document.getElementById('fbFab').addEventListener('click', openDialog);
+document.getElementById('fbDialog').addEventListener('close', function () { if (!fbDone) document.getElementById('fbFab').hidden = false; });
+if (state.lang === 'en') queueTranslate();
+</script>
+</body>
+</html>
